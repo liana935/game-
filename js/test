@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Game with Three.js</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <script>
+        // Инициализация сцены, камеры и рендерера
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Создание полупрозрачных кубов
+        const geometry = new THREE.BoxGeometry();
+        const material1 = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
+        const material2 = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.5 });
+        
+        const cube1 = new THREE.Mesh(geometry, material1);
+        const cube2 = new THREE.Mesh(geometry, material2);
+        
+        cube1.position.x = -2;
+        cube2.position.x = 2;
+
+        scene.add(cube1);
+        scene.add(cube2);
+
+        // Создание текстов "0" и "1"
+        const fontLoader = new THREE.FontLoader();
+        const pointsCount = 100;
+
+        fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
+            const textMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Зеленый цвет
+
+            for (let i = 0; i < pointsCount; i++) {
+                const textGeometry = new THREE.TextGeometry(Math.random() < 0.5 ? '0' : '1', {
+                    font: font,
+                    size: 0.04,
+                    height: 0.01,
+                });
+
+                const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                textMesh.position.x = Math.random() * 4 - 2; // x
+                textMesh.position.y = Math.random() * 4 - 2; // y
+                textMesh.position.z = Math.random() * 4 - 2; // z
+                scene.add(textMesh);
+            }
+        });
+
+        camera.position.z = 5;
+
+        // Анимация
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Вращение сцены
+            cube1.rotation.x += 0.01;
+            cube1.rotation.y += 0.01;
+            cube2.rotation.x += 0.01;
+            cube2.rotation.y += 0.01;
+
+            // Обновление позиций текстов
+            const textMeshes = scene.children.filter(child => child instanceof THREE.Mesh && child.geometry instanceof THREE.TextGeometry);
+            textMeshes.forEach(textMesh => {
+                textMesh.position.x += (Math.random() - 0.5) * 0.02; // x
+                textMesh.position.y += (Math.random() - 0.5) * 0.01; // y
+                textMesh.position.z += (Math.random() - 0.5) * 0.01; // z
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Обработка изменения размеров окна
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Инициализация Telegram Web App
+        Telegram.WebApp.onEvent('mainButtonClicked', function() {
+            Telegram.WebApp.sendData("User  registered!");
+        });
+
+        Telegram.WebApp.ready();
+    </script>
+</body>
+</html>

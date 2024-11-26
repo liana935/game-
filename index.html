@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Game with Three.js</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <script>
+        // Инициализация сцены, камеры и рендерера
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Создание полупрозрачных кубов
+        const geometry = new THREE.BoxGeometry();
+        const material1 = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 0.5 });
+        const material2 = new THREE.MeshBasicMaterial({ color: 0x0000ff, transparent: true, opacity: 0.5 });
+        
+        const cube1 = new THREE.Mesh(geometry, material1);
+        const cube2 = new THREE.Mesh(geometry, material2);
+        
+        // Увеличиваем расстояние между кубами
+        cube1.position.x = -1.5; // Изменено с -2 на -4
+        cube2.position.x = 1.5;  // Изменено с 2 на 4
+
+        scene.add(cube1);
+        scene.add(cube2);
+
+        // Создание текстов "0" и "1"
+        const fontLoader = new THREE.FontLoader();
+        const pointsCount = 100; // Количество текстов
+        const texts = []; // Массив для хранения текстовых объектов
+
+        fontLoader.load('https://threejs.org/examples/fonts/helvetiker_regular.typeface.json', function (font) {
+            const textMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Зеленый цвет
+
+            for (let i = 0; i < pointsCount; i++) {
+                const textGeometry = new THREE.TextGeometry(Math.random() < 0.5 ? '0' : '1', {
+                    font: font,
+                    size: 0.2,
+                    height: 0.01,
+                });
+
+                const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+                textMesh.position.x = Math.random() * 8 - 1.5; // Изменено с 4 на 8 для соответствия новому расстоянию
+                textMesh.position.y = Math.random() * 4 - 2; // y
+                textMesh.position.z = Math.random() * 4 - 2; // z
+                scene.add(textMesh);
+                texts.push(textMesh); // Добавляем текст в массив
+            }
+        });
+
+        camera.position.z = 9; // Увеличиваем позицию камеры для лучшего обзора
+        // Установка начальных параметров камеры
+        // Установка начальных параметров камеры
+        // Установка начальных параметров камеры
+       // Установка начальных параметров камеры
+        let radius = 7; // Радиус вращения камеры
+        let theta = 0; // Угол вокруг Y
+        let phi = 0; // Угол вокруг X
+
+        let isMouseDown = false;
+        let previousMousePosition = { x: 0, y: 0 };
+
+        // Обработчик для мыши
+        window.addEventListener('mousedown', (event) => {
+            isMouseDown = true;
+        });
+
+        window.addEventListener('mouseup', (event) => {
+            isMouseDown = false;
+        });
+
+        window.addEventListener('mousemove', (event) => {
+            if (!isMouseDown) return;
+
+            const deltaMove = {
+                x: event.clientX - previousMousePosition.x,
+                y: event.clientY - previousMousePosition.y,
+            };
+
+            // Уменьшаем множитель для более плавного вращения
+            theta -= deltaMove.x * 0.005; // Вращение вокруг Y
+            phi -= deltaMove.y * 0.005; // Вращение вокруг X
+
+            // Обновление позиции камеры
+            updateCameraPosition();
+
+            previousMousePosition = { x: event.clientX, y: event.clientY };
+        });
+
+        // Обработчики для сенсорного ввода
+        window.addEventListener('touchstart', (event) => {
+            isMouseDown = true;
+            previousMousePosition = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+        });
+
+        window.addEventListener('touchend', (event) => {
+            isMouseDown = false;
+        });
+
+        window.addEventListener('touchmove', (event) => {
+            if (!isMouseDown) return;
+
+            const deltaMove = {
+                x: event.touches[0].clientX - previousMousePosition.x,
+                y: event.touches[0].clientY - previousMousePosition.y,
+            };
+
+            // Уменьшаем множитель для более плавного вращения
+            theta -= deltaMove.x * 0.005; // Вращение вокруг Y
+            phi -= deltaMove.y * 0.005; // Вращение вокруг X
+
+            // Обновление позиции камеры
+            updateCameraPosition();
+
+            previousMousePosition = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+        });
+
+        // Функция для обновления позиции камеры
+        function updateCameraPosition() {
+            camera.position.x = radius * Math.sin(phi) * Math.cos(theta);
+            camera.position.y = radius * Math.sin(phi) * Math.sin(theta);
+            camera.position.z = radius * Math.cos(phi);
+            camera.lookAt(0, 0, 0); // Камера всегда смотрит в центр сцены
+        }
+
+        // Анимация
+        let time = 0; // Время для анимации
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Вращение сцены
+            cube1.rotation.x += 0.01;
+            cube1.rotation.y += 0.01;
+            cube2.rotation.x += 0.01;
+            cube2.rotation.y += 0.01;
+
+            // Обновление позиций текстов по траектории в виде перевернутой восьмерки
+            texts.forEach((textMesh, index) => {
+                const angle = time + index * (Math.PI / texts.length); // Угол для текущего текста
+                const radius = 2; // Увеличиваем радиус вращения
+
+                // Уравнения для перевернутой восьмерки
+                textMesh.position.x = (radius * Math.sin(angle)) * 2; // Умножаем на 2 для движения между кубами
+                textMesh.position.y = radius * Math.sin(2 * angle); // Вращение по оси Y
+                textMesh.position.z = (radius * Math.cos(angle)); // Вращение по оси Z
+            });
+
+            time +=  0.02; // Увеличиваем время для анимации
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // Обработка изменения размеров окна
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Обработка изменения размеров окна
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Инициализация Telegram Web App
+        Telegram.WebApp.onEvent('mainButtonClicked', function() {
+            Telegram.WebApp.sendData("User  registered!");
+        });
+
+        Telegram.WebApp.ready();
+    </script>
+</body>
+</html>
